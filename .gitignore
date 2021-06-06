@@ -6,3 +6,4 @@
 *.sym
 .ccls-cache/
 bin/
+.check_output.log

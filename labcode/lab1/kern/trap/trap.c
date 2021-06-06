@@ -31,6 +31,7 @@ static struct pseudodesc idt_pd = {
     sizeof(idt) - 1, (uintptr_t)idt
 };
 
+extern uintptr_t __vectors[];
 /* idt_init - initialize IDT to each of the entry points in kern/trap/vectors.S */
 void
 idt_init(void) {
@@ -46,6 +47,15 @@ idt_init(void) {
       *     You don't know the meaning of this instruction? just google it! and check the libs/x86.h to know more.
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
+    for(int i=0; i<256; i++){
+        if (i == T_SYSCALL){
+            SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_USER);
+        }else{
+            SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
+        }
+    }
+
+    lidt(&idt_pd);
 }
 
 static const char *
@@ -147,6 +157,13 @@ trap_dispatch(struct trapframe *tf) {
          * (2) Every TICK_NUM cycle, you can print some info using a funciton, such as print_ticks().
          * (3) Too Simple? Yes, I think so!
          */
+        ticks ++;
+        if (ticks == 100){
+            print_ticks();
+            ticks = 0;
+
+        }
+
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
@@ -159,7 +176,7 @@ trap_dispatch(struct trapframe *tf) {
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
     case T_SWITCH_TOK:
-        panic("T_SWITCH_** ??\n");
+        cprintf("T_SWITCH_** ??\n");
         break;
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
