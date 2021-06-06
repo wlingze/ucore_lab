@@ -162,7 +162,7 @@ $(bootblock): $(call toobj,$(bootfiles)) | $(call totarget,sign)
 	@echo + ld $@
 	$(V)$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 $^ -o $(call toobj,bootblock)
 	@$(OBJDUMP) -S $(call objfile,bootblock) > $(call asmfile,bootblock)
-	@$(OBJCOPY) -S -O binary $(call objfile,bootblock) $(call outfile,bootblock)
+	@$(OBJCOPY) -S -O binary -j .text -j .eh_frame $(call objfile,bootblock) $(call outfile,bootblock)
 	@$(call totarget,sign) $(call outfile,bootblock) $(bootblock)
 
 $(call create_target,bootblock)
@@ -215,7 +215,9 @@ log: $(UCOREIMG)
 	$(V)$(QEMU) -no-reboot -d int,cpu_reset  -D q.log -parallel stdio -hda $< -serial null
 qemu-nox: $(UCOREIMG)
 	$(V)$(QEMU)   -no-reboot -serial mon:stdio -hda $< -nographic
-TERMINAL        :=gnome-terminal
+gdb: $(UCOREIMG)
+	$(V)$(QEMU) -S -s  -no-reboot -serial mon:stdio -hda $< -nographic
+TERMINAL        :=konsole
 debug: $(UCOREIMG)
 	$(V)$(QEMU) -S -s -parallel stdio -hda $< -serial null &
 	$(V)sleep 2
