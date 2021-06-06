@@ -48,7 +48,7 @@ idt_init(void) {
       *     Notice: the argument of lidt is idt_pd. try to find it!
       */
     for(int i=0; i<256; i++){
-        if (i == T_SYSCALL){
+        if ((i == T_SYSCALL) || (i == T_SWITCH_TOK)){
             SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_USER);
         }else{
             SETGATE(idt[i], 0, GD_KTEXT, __vectors[i], DPL_KERNEL);
@@ -144,6 +144,8 @@ print_regs(struct pushregs *regs) {
     cprintf("  eax  0x%08x\n", regs->reg_eax);
 }
 
+struct trapframe switch2u, *switch2k;
+
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
@@ -161,7 +163,6 @@ trap_dispatch(struct trapframe *tf) {
         if (ticks == 100){
             print_ticks();
             ticks = 0;
-
         }
 
         break;
@@ -175,9 +176,21 @@ trap_dispatch(struct trapframe *tf) {
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
-    case T_SWITCH_TOK:
-        cprintf("T_SWITCH_** ??\n");
+        if (tf->tf_cs != USER_CS){
+            tf->tf_cs = USER_CS;
+            tf->tf_ds = tf->tf_es = tf->tf_ss = USER_DS;
+            tf->tf_eflags |= FL_IOPL_MASK;
+        }
         break;
+
+    case T_SWITCH_TOK:
+        if( tf->tf_cs != KERNEL_CS){
+            tf->tf_cs = KERNEL_CS;
+            tf->tf_ds = tf->tf_es = tf->tf_ss = KERNEL_DS;
+            tf->tf_eflags &= ~FL_IOPL_MASK;
+        }
+        break;
+
     case IRQ_OFFSET + IRQ_IDE1:
     case IRQ_OFFSET + IRQ_IDE2:
         /* do nothing */
