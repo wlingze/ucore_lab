@@ -229,15 +229,19 @@ TARGETS: $(TARGETS)
 .DEFAULT_GOAL := TARGETS
 
 QEMUOPTS = -hda $(UCOREIMG)
+all: $(UCOREIMG)
 
 .PHONY: qemu qemu-nox debug debug-nox
 qemu-mon: $(UCOREIMG)
 	$(V)$(QEMU)  -no-reboot -monitor stdio $(QEMUOPTS) -serial null
-qemu: $(UCOREIMG)
+qemu-n: $(UCOREIMG)
 	$(V)$(QEMU)  -no-reboot -parallel stdio $(QEMUOPTS) -serial null
 
-qemu-nox: $(UCOREIMG)
+qemu: $(UCOREIMG)
 	$(V)$(QEMU)  -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
+
+gdb: $(UCOREIMG)
+	$(V)$(QEMU) -S -s -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
 
 TERMINAL := gnome-terminal
 

@@ -7,3 +7,8 @@
 .ccls-cache/
 bin/
 .check_output.log
+.check_pmm.log
+.gdbinit
+.gdb.in
+obj/
+
