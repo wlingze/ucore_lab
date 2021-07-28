@@ -146,8 +146,24 @@ print_regs(struct pushregs *regs) {
     cprintf("  eax  0x%08x\n", regs->reg_eax);
 }
 
-struct trapframe switchk2u, *switchu2k;
 
+static void
+switch_to_user(struct trapframe *tf) {
+    if(tf->tf_cs  != USER_CS){
+        tf->tf_cs = USER_CS;
+        tf->tf_es = tf->tf_ds = tf->tf_ss = tf->tf_gs = tf->tf_fs = USER_DS;
+        tf->tf_eflags |= FL_IOPL_MASK;
+    }
+}
+
+static void
+switch_to_kernel(struct trapframe * tf) {
+    if(tf->tf_cs  != KERNEL_CS){
+        tf->tf_cs = KERNEL_CS;
+        tf->tf_es = tf->tf_ds = tf->tf_ss = tf->tf_gs = tf->tf_fs = KERNEL_DS;
+        tf->tf_eflags &= ~FL_IOPL_MASK;
+    }
+}
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
@@ -169,6 +185,16 @@ trap_dispatch(struct trapframe *tf) {
         break;
     case IRQ_OFFSET + IRQ_COM1:
         c = cons_getc();
+        if (c == '3'){
+            // k2u
+            switch_to_user(tf);
+            print_trapframe(tf);
+        }
+        if (c == '0'){
+            // u2k
+            switch_to_kernel(tf);
+            print_trapframe(tf);
+        }
         cprintf("serial [%03d] %c\n", c, c);
         break;
     case IRQ_OFFSET + IRQ_KBD:
@@ -177,37 +203,11 @@ trap_dispatch(struct trapframe *tf) {
         break;
     //LAB1 CHALLENGE 1 : YOUR CODE you should modify below codes.
     case T_SWITCH_TOU:
-        if (tf->tf_cs != USER_CS) {
-            switchk2u = *tf;
-
-            // set register
-            switchk2u.tf_cs = USER_CS;
-            switchk2u.tf_es = switchk2u.tf_ds = switchk2u.tf_ss = USER_DS;
-            switchk2u.tf_eflags |= FL_IOPL_MASK;
-
-            switchk2u.tf_esp = (uint32_t)tf + sizeof(struct trapframe) - 8;
-
-            // modify tf->switchk2u
-            // return to trapentry.S:27: pop esp, esp->switchk2u
-            *((uint32_t *)tf - 1) = (uint32_t)&switchk2u;
-        }
-            break;
+        switch_to_user(tf);
         break;
 
     case T_SWITCH_TOK:
-        if(tf->tf_cs != KERNEL_CS){
-
-            tf->tf_cs = KERNEL_CS;
-            tf->tf_ds = tf->tf_es = KERNEL_DS;
-            tf->tf_eflags &= ~FL_IOPL_MASK;
-
-            switchu2k = (struct trapframe *)(tf->tf_esp - (sizeof(struct trapframe) - 8));
-            memmove(switchu2k, tf, sizeof(struct trapframe) - 8);
-
-            // modify tf to switchu2k
-            // return to trapentry, esp->switchu2k
-            *((uint32_t *)tf - 1) = (uint32_t)switchu2k;
-        }
+        switch_to_kernel(tf);
         break;
 
     case IRQ_OFFSET + IRQ_IDE1:
