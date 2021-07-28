@@ -204,6 +204,8 @@ endif
 
 TARGETS: $(TARGETS)
 
+all: $(UCOREIMG)
+
 .DEFAULT_GOAL := TARGETS
 
 .PHONY: qemu qemu-nox debug debug-nox

@@ -1,4 +1,8 @@
 file bin/kernel
 target remote :1234
-break kern_init
+break trap_dispatch
 continue
+
+define hook-stop
+eval "x/5i $pc"
+end
