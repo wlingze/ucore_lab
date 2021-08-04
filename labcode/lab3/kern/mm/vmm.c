@@ -396,7 +396,30 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         }
    }
 #endif
-   ret = 0;
+    if ((ptep = get_pte(mm->pgdir, addr, 1)) == NULL){
+        cprintf("do_pgfault failed: get_pte failed\n");
+        goto failed;
+    }
+
+    if(*ptep == 0){
+        if (pgdir_alloc_page(mm->pgdir, addr, perm) == 0){
+            cprintf("do_pgfault failed: alloc page failed\n");
+            goto failed;
+        }
+    } else {
+        if(swap_init_ok) {
+            struct Page * page = NULL;
+            swap_in(mm, addr, &page);
+            page_insert(mm->pgdir, page, addr, perm);
+            swap_map_swappable(mm, addr, page, 1);
+            page->pra_vaddr = addr;
+        }
+        else {
+            cprintf("no swap_init_ok but ptep is %x, failed\n",*ptep);
+            goto failed;
+        }
+    }
+    ret = 0;
 failed:
     return ret;
 }

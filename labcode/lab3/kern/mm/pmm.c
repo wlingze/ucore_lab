@@ -372,8 +372,9 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
     }
     return NULL;          // (8) return page table entry
 #endif
-    pde_t *pde = pgdir[PDX(la)];
-    if (pde == NULL){
+
+    pde_t *pde = &pgdir[PDX(la)];
+    if (!(*pde & PTE_P)) {
         if (!create) {
             return NULL;
         }
@@ -381,13 +382,12 @@ get_pte(pde_t *pgdir, uintptr_t la, bool create) {
         struct Page* page = alloc_page();
         set_page_ref(page, 1);
 
-        pte_t pte = page2pa(page) | PTE_P | PTE_W | PTE_U;
+        pte_t pte = page2pa(page);
         memset(KADDR(pte), 0, PGSIZE);
+        *pde = pte | PTE_U | PTE_W | PTE_P;
 
-        pgdir[PDX(la)] = pte;
     }
-    /*return &((pte_t *)KADDR(PDE_ADDR(pgdir[PDX(la)])))[PTX(la)];*/
-    return &((pte_t *)KADDR(PDE_ADDR(pgdir[PDX(la)])))[PTX(la)];
+    return &((pte_t *)KADDR(PDE_ADDR(*pde)))[PTX(la)];
 
 }
 

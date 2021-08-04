@@ -218,6 +218,8 @@ endif
 
 # files for grade script
 
+all: $(UCOREIMG)
+
 TARGETS: $(TARGETS)
 
 .DEFAULT_GOAL := TARGETS
