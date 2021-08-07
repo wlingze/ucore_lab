@@ -8,6 +8,7 @@
 bin/
 .check_output.log
 .check_pmm.log
+.check*.log
 .gdbinit
 gdbinit
 .gdb.in

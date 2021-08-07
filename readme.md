@@ -25,3 +25,8 @@ ucore实验代码
 - [ ] 拓展练习: 识别dirty bit的extended clock页替换算法
 - [ ] 拓展练习: LRU页替换算法
 
+* **lab4**
+
+- [x] 练习: `alloc_proc`和`do_fork`函数
+- [x] 理解: `proc_run`函数实现
+- [ ] 拓展练习: 任意大小内存分配算法
