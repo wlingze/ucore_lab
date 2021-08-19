@@ -263,6 +263,8 @@ endif
 
 TARGETS: $(TARGETS)
 
+all: $(UCOREIMG)
+
 .DEFAULT_GOAL := TARGETS
 
 QEMUOPTS = -hda $(UCOREIMG) -drive file=$(SWAPIMG),media=disk,cache=writeback
@@ -275,6 +277,9 @@ qemu: $(UCOREIMG) $(SWAPIMG)
 
 qemu-nox: $(UCOREIMG) $(SWAPIMG)
 	$(V)$(QEMU)  -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
+
+gdb: $(UCOREIMG) $(SWAPIMG)
+	$(V)$(QEMU)  -S -s -no-reboot -serial mon:stdio $(QEMUOPTS) -nographic
 
 TERMINAL := gnome-terminal
 

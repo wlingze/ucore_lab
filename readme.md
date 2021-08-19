@@ -38,3 +38,9 @@ ucore实验代码
 - [x] 理解: 分析理解系统调用和进程控制相关实现
 - [ ] 拓展练习: 实现copy on write
 
+* **lab6**
+
+- [x] 练习: 使用 Round Robin 调度算法
+- [x] 练习: 实现 Stride Scheduling 调度算法
+- [ ] 扩展练习：实现 Linux 的 CFS 调度算法
+- [ ] 扩展练习：在ucore上实现尽可能多的各种基本调度算法

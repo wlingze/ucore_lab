@@ -339,7 +339,7 @@ check_pgfault(void) {
 
     insert_vma_struct(mm, vma);
 
-    uintptr_t addr = 0x100;
+    uintptr_t addr = 0x1000;
     assert(find_vma(mm, addr) == vma);
 
     int i, sum = 0;
@@ -493,6 +493,21 @@ do_pgfault(struct mm_struct *mm, uint32_t error_code, uintptr_t addr) {
         }
    }
 #endif
+    ptep = get_pte(mm->pgdir, addr, 1);
+    if(*ptep == 0){
+        if(! pgdir_alloc_page(mm->pgdir, addr, perm)){
+            cprintf("do_pgfault failed: pgdir_alloc_page failed\n");
+            goto failed;
+        }
+    }else{
+        if (swap_init_ok){
+            struct Page * page = NULL;
+            swap_in(mm, addr, &page);
+            swap_map_swappable(mm, addr, page, 1);
+            page_insert(mm->pgdir, page, addr, perm);
+            page->pra_vaddr = addr;
+        }
+    }
    ret = 0;
 failed:
     return ret;

@@ -345,7 +345,7 @@ default_check() {
     '  |-- PTE(000e0) faf00000-fafe0000 000e0000 urw'           \
     '  |-- PTE(00001) fafeb000-fafec000 00001000 -rw'		\
     'check_vma_struct() succeeded!'                             \
-    'page fault at 0x00000100: K/W [no page found].'            \
+    'page fault at 0x00001000: K/W [no page found].'            \
     'check_pgfault() succeeded!'                                \
     'check_vmm() succeeded.'					\
     'page fault at 0x00001000: K/W [no page found].'            \
