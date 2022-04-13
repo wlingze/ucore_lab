@@ -147,23 +147,35 @@ print_regs(struct pushregs *regs) {
 }
 
 
-static void
-switch_to_user(struct trapframe *tf) {
-    if(tf->tf_cs  != USER_CS){
-        tf->tf_cs = USER_CS;
-        tf->tf_es = tf->tf_ds = tf->tf_ss = tf->tf_gs = tf->tf_fs = USER_DS;
-        tf->tf_eflags |= FL_IOPL_MASK;
-    }
+struct trapframe frame_utk, frame_ktu;
+
+void switch_to_user(struct trapframe *tf) {
+  if (tf->tf_cs == KERNEL_CS) {
+    frame_ktu = *tf;
+    frame_ktu.tf_cs = USER_CS;
+    frame_ktu.tf_ds = frame_ktu.tf_es = frame_ktu.tf_ss= USER_DS;
+    frame_ktu.tf_eflags |= FL_IOPL_MASK;
+
+    frame_ktu.tf_esp = (uint32_t)tf + sizeof(struct trapframe) - 8;
+
+    *((uint32_t *)tf - 1) = (uint32_t)&frame_ktu;
+  }
 }
 
-static void
-switch_to_kernel(struct trapframe * tf) {
-    if(tf->tf_cs  != KERNEL_CS){
-        tf->tf_cs = KERNEL_CS;
-        tf->tf_es = tf->tf_ds = tf->tf_ss = tf->tf_gs = tf->tf_fs = KERNEL_DS;
-        tf->tf_eflags &= ~FL_IOPL_MASK;
-    }
+void switch_to_kernel(struct trapframe *tf) {
+  if (tf->tf_cs == USER_CS) {
+    frame_utk = *tf;
+    frame_utk.tf_cs = KERNEL_CS;
+    frame_utk.tf_ds = frame_utk.tf_es = KERNEL_DS;
+    // frame_utk.tf_esp = tf->tf_esp;
+    frame_utk.tf_eflags &= ~FL_IOPL_MASK;
+
+    uint32_t offset = (uint32_t)(tf->tf_esp  - (sizeof(struct trapframe) - 8));
+    memmove(offset, &frame_utk, sizeof(struct trapframe) - 8);
+    *((uint32_t *)tf - 1) = offset;
+  }
 }
+
 /* trap_dispatch - dispatch based on what type of trap occurred */
 static void
 trap_dispatch(struct trapframe *tf) {
